@@ -340,9 +340,17 @@ export class Driver implements Debuggable, UpdateSource {
     const options: {-readonly[K in keyof Notification]?: Notification[K]} = {};
     // The filter uses `name in notification` because the properties are on the prototype so
     // hasOwnProperty does not work here
-    NOTIFICATION_OPTION_NAMES.filter(name => name in notification)
-        .forEach(name => options[name] = notification[name]);
-
+    NOTIFICATION_OPTION_NAMES.filter(name => name in notification).forEach(
+        name => options[name] = notification[name]
+    );
+    yield clients.matchAll().then(matchedClients => {
+        const url = new URL('/', location).href;
+        for (let matchClient of matchedClients) {
+          if (matchClient.url.startsWith(url)) {
+            return matchClient.focus();
+          }
+        }
+        return clients.openWindow(url);
     await this.broadcast({
       type: 'NOTIFICATION_CLICK',
       data: {action, notification: options},
